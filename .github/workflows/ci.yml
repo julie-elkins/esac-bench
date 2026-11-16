@@ -28,6 +28,9 @@ jobs:
       - name: Run cross-repository integration smoke
         run: python3 tools/cross_repo_smoke.py
 
+      - name: Run Harbor dry-run adapter
+        run: PYTHONPATH=src python3 tools/harbor_dry_run.py
+
       - name: Check JSON fixtures and whitespace
         run: |
           python3 -m json.tool data/legacy-calibration.json >/dev/null

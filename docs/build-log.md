@@ -128,3 +128,94 @@ The smoke cannot detect a changed upstream repository until its metadata export
 is refreshed. A later live adapter will require a separate, explicitly bounded
 workflow.
 
+### Decided by
+
+Julie and Codex on 2026-11-16.
+
+### Verification
+
+- The native report gate passes with schema version `esac-report-v0`.
+- The mutation suite passes with four detected controls.
+- The cross-repository smoke imports two calibration sources and two diagnostic
+  cases.
+- The smoke confirms `native_esac_score: false`.
+- The workflow uses a pinned official checkout action and read-only contents
+  permissions.
+
+## Phase 5 — live-agent adapter contract
+
+### Decided
+
+Define a provider-neutral, dry-run-capable adapter contract before adding a
+provider SDK or live execution. Require bounded runtime, attempts, output,
+preflight spend, tool scope, contract digests, and human approval.
+
+### Instead of
+
+Adding a live provider command first, allowing automatic retries, or exposing
+raw trajectories through the public benchmark report.
+
+### Why
+
+The adapter is the boundary where credentials, provider cost, timeouts, and
+side effects become possible. A typed request and result make those controls
+testable before a paid run.
+
+### Costs if wrong
+
+The first live adapter will require explicit provider-specific implementation
+work, and no live benchmark score is produced by this phase. That delay is
+intentional because a missing stop condition can spend money without producing
+interpretable evidence.
+
+### Decided by
+
+Julie and Codex on 2026-11-16.
+
+### Verification
+
+- Fourteen unit tests pass.
+- Live requests require explicit human approval and bounded runtime, attempts,
+  output, spend, tools, and contract digests.
+- Dry-run requests reject credential-variable names.
+- Metadata-only adapter results validate successfully.
+- No provider SDK, credential read, network call, or paid run was added.
+
+## Phase 6 — Harbor mini-swe-agent dry-run adapter
+
+### Decided
+
+Add a provider-specific Harbor/mini-swe-agent adapter that constructs a
+shell-free command plan and returns an explicitly not-executed result.
+
+### Instead of
+
+Starting Finch, reading an Anthropic credential, invoking Harbor, or treating a
+constructed command as a benchmark observation.
+
+### Why
+
+The dry-run adapter exercises the real path and receipt naming while keeping
+provider cost, credentials, and environment failures outside the contract
+test. It also proves that a result can say `unknown` and `not_observed`
+instead of implying success.
+
+### Costs if wrong
+
+The adapter does not yet prove live-provider behavior and adds one
+provider-specific contract to maintain. That is preferable to spending credits
+before the command, path, and evidence boundaries are tested.
+
+### Decided by
+
+Julie and Codex on 2026-11-16.
+
+### Verification
+
+- The dry-run tool emits a shell-free `harbor run` argument vector.
+- Credential access is false and no provider or container runtime is called.
+- The result reports `status: unknown`, `native_outcome: not_observed`, and no
+  receipt digest.
+- Traversal paths are refused.
+- The CI workflow runs the dry-run adapter.
+

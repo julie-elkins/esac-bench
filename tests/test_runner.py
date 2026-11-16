@@ -3,6 +3,15 @@ from pathlib import Path
 import unittest
 
 from esac_bench.adapters import load_calibration_record, load_diagnostic_cases
+from esac_bench.live_contract import (
+    ADAPTER_CONTRACT_VERSION,
+    AdapterRequest,
+    AdapterResult,
+    digest_identifier,
+    validate_request,
+    validate_result,
+)
+from esac_bench.harbor_adapter import build_harbor_dry_run
 from esac_bench.runner import run_suite
 from esac_bench.schema import SCHEMA_VERSION, validate_native_report
 
@@ -59,6 +68,129 @@ class RunnerTests(unittest.TestCase):
         self.assertFalse(calibration["native_esac_score"])
         self.assertEqual(calibration["source_count"], 2)
         self.assertEqual(diagnostics["case_count"], 2)
+
+    def test_live_request_requires_bounds_and_approval(self):
+        request = AdapterRequest(
+            run_id="run-1",
+            adapter_id="adapter-1",
+            provider="provider-1",
+            model="model-1",
+            task_id="task-1",
+            execution_mode="live",
+            credential_env_var="OPENAI_API_KEY",
+            max_runtime_seconds=60,
+            max_attempts=1,
+            output_cap_bytes=1024,
+            spend_ceiling_usd=1,
+            stop_condition="stop after one task or any refusal",
+            tool_scope=("tool-runner",),
+            task_contract_digest=digest_identifier("task"),
+            evidence_contract_digest=digest_identifier("evidence"),
+            human_approval=False,
+        )
+        refusal = validate_request(request)
+        self.assertIsNotNone(refusal)
+        self.assertEqual(refusal.error, "human_approval_required")
+
+    def test_dry_run_does_not_accept_a_credential_name(self):
+        request = AdapterRequest(
+            run_id="run-1",
+            adapter_id="adapter-1",
+            provider="provider-1",
+            model="model-1",
+            task_id="task-1",
+            execution_mode="dry_run",
+            credential_env_var="OPENAI_API_KEY",
+            max_runtime_seconds=60,
+            max_attempts=1,
+            output_cap_bytes=1024,
+            spend_ceiling_usd=1,
+            stop_condition="stop after validation",
+            tool_scope=("tool-runner",),
+            task_contract_digest=digest_identifier("task"),
+            evidence_contract_digest=digest_identifier("evidence"),
+            human_approval=False,
+        )
+        refusal = validate_request(request)
+        self.assertIsNotNone(refusal)
+        self.assertEqual(refusal.error, "invalid_credential_env_var")
+
+    def test_live_result_is_metadata_only(self):
+        result = AdapterResult(
+            contract_version=ADAPTER_CONTRACT_VERSION,
+            run_id="run-1",
+            adapter_id="adapter-1",
+            provider="provider-1",
+            model="model-1",
+            task_id="task-1",
+            status="completed",
+            claim="completed",
+            native_outcome="pass",
+            evidence_status="complete",
+            trajectory_status="present",
+            returncode=0,
+            elapsed_seconds=1.2,
+            observed_cost_usd=0.1,
+            receipt_digest=digest_identifier("receipt"),
+        )
+        self.assertIsNone(validate_result(result))
+
+    def test_harbor_dry_run_builds_shell_free_plan_without_credentials(self):
+        request = AdapterRequest(
+            run_id="run-1",
+            adapter_id="mini-swe-agent",
+            provider="anthropic",
+            model="claude-opus-4-6",
+            task_id="task-1",
+            execution_mode="dry_run",
+            credential_env_var=None,
+            max_runtime_seconds=60,
+            max_attempts=1,
+            output_cap_bytes=1024,
+            spend_ceiling_usd=1,
+            stop_condition="stop after plan construction",
+            tool_scope=("harbor-runner",),
+            task_contract_digest=digest_identifier("task"),
+            evidence_contract_digest=digest_identifier("evidence"),
+            human_approval=False,
+        )
+        plan = build_harbor_dry_run(
+            request,
+            config_path="config/mini-swe-agent-live-2.0.toml",
+            receipt_path="runs/esac-dry-run.receipt.json",
+        )
+        self.assertEqual(plan.command[0], "harbor")
+        self.assertFalse(plan.shell)
+        self.assertFalse(plan.credential_access)
+        self.assertEqual(plan.result.status, "unknown")
+        self.assertEqual(plan.result.native_outcome, "not_observed")
+        self.assertEqual(plan.result.trajectory_status, "absent")
+
+    def test_harbor_dry_run_rejects_path_traversal(self):
+        request = AdapterRequest(
+            run_id="run-1",
+            adapter_id="mini-swe-agent",
+            provider="anthropic",
+            model="claude-opus-4-6",
+            task_id="task-1",
+            execution_mode="dry_run",
+            credential_env_var=None,
+            max_runtime_seconds=60,
+            max_attempts=1,
+            output_cap_bytes=1024,
+            spend_ceiling_usd=1,
+            stop_condition="stop after plan construction",
+            tool_scope=("harbor-runner",),
+            task_contract_digest=digest_identifier("task"),
+            evidence_contract_digest=digest_identifier("evidence"),
+            human_approval=False,
+        )
+        refusal = build_harbor_dry_run(
+            request,
+            config_path="../secret.toml",
+            receipt_path="runs/result.json",
+        )
+        self.assertEqual(refusal["error"], "invalid_config_path")
 
 
 if __name__ == "__main__":

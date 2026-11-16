@@ -83,6 +83,13 @@ and the cross-repository integration smoke. The smoke imports the committed
 Harbor and assurance-lab records and verifies that they remain calibration
 data—not native ESAC scores.
 
+The first provider-specific integration is a safe Harbor/mini-swe-agent
+dry-run adapter. It validates command shape and evidence boundaries without
+reading credentials, starting Finch or Docker, contacting a provider, or
+claiming a benchmark observation. See
+[`docs/harbor-dry-run-adapter.md`](docs/harbor-dry-run-adapter.md) and the
+provider-neutral [`docs/live-adapter-contract.md`](docs/live-adapter-contract.md).
+
 ## Existing research used as calibration
 
 The public Harbor study and Agent Assurance Harness are connected as
