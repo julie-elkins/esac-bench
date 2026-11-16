@@ -211,14 +211,39 @@ def _minimal_child_environment(credential_env_var: str, credential: str) -> dict
     return environment
 
 
-def _terminate_process(process: subprocess.Popen[bytes]) -> None:
-    """Stop the process group so a timed-out child cannot continue spending."""
+def _terminate_process(process: subprocess.Popen[bytes]) -> bool:
+    """Stop and reap the process group so a timed-out child cannot continue spending."""
 
     try:
-        os.killpg(process.pid, signal.SIGKILL)
-    except (AttributeError, OSError):
-        process.kill()
-    process.wait()
+        process_group_id = os.getpgid(process.pid)
+    except ProcessLookupError:
+        return process.poll() is not None
+
+    # The PID is usually also the process-group ID because the worker starts a
+    # new session, but that is an implementation detail of the launcher. Use
+    # the observed group ID: assuming PID == PGID left the Harbor child alive
+    # in the first live smoke and could allow provider work to continue.
+    try:
+        os.killpg(process_group_id, signal.SIGTERM)
+    except ProcessLookupError:
+        return process.poll() is not None
+
+    try:
+        process.wait(timeout=2)
+        return True
+    except subprocess.TimeoutExpired:
+        pass
+
+    try:
+        os.killpg(process_group_id, signal.SIGKILL)
+    except ProcessLookupError:
+        return process.poll() is not None
+
+    try:
+        process.wait(timeout=2)
+    except subprocess.TimeoutExpired:
+        return False
+    return True
 
 
 def _digest_file(path: Path) -> str | None:
@@ -362,6 +387,7 @@ def run_harbor_live(
     process: subprocess.Popen[bytes] | None = None
     timed_out = False
     output_exceeded = False
+    cleanup_confirmed = True
 
     try:
         with output_file.open("wb") as output_stream:
@@ -377,11 +403,11 @@ def run_harbor_live(
             while process.poll() is None:
                 if time.monotonic() - started >= request.max_runtime_seconds:
                     timed_out = True
-                    _terminate_process(process)
+                    cleanup_confirmed = _terminate_process(process)
                     break
                 if output_file.stat().st_size > request.output_cap_bytes:
                     output_exceeded = True
-                    _terminate_process(process)
+                    cleanup_confirmed = _terminate_process(process)
                     break
                 time.sleep(0.05)
             if process.poll() is None:
@@ -416,7 +442,11 @@ def run_harbor_live(
             returncode=None,
             elapsed_seconds=elapsed,
             receipt_digest=receipt_digest,
-            limitation="Harbor exceeded the declared runtime bound",
+            limitation=(
+                "Harbor exceeded the declared runtime bound"
+                if cleanup_confirmed
+                else "Harbor exceeded the declared runtime bound; process cleanup was not confirmed"
+            ),
         )
     elif output_exceeded:
         result = _result(
@@ -429,7 +459,11 @@ def run_harbor_live(
             returncode=None,
             elapsed_seconds=elapsed,
             receipt_digest=receipt_digest,
-            limitation="Harbor exceeded the declared local output cap",
+            limitation=(
+                "Harbor exceeded the declared local output cap"
+                if cleanup_confirmed
+                else "Harbor exceeded the declared local output cap; process cleanup was not confirmed"
+            ),
         )
     else:
         returncode = process.returncode if process is not None else None
