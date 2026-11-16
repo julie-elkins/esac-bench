@@ -1,0 +1,14 @@
+__pycache__/
+.pytest_cache/
+*.py[cod]
+.venv/
+dist/
+build/
+*.egg-info/
+
+# Native and diagnostic run outputs stay local unless explicitly summarized.
+runs/
+jobs/
+*.trace.json
+*.trajectory.json
+

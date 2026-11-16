@@ -1,0 +1,35 @@
+name: ESAC-Bench contract gate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  contract-gate:
+    name: Contract and integration gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
+
+      - name: Run unit tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Run native report gate
+        run: |
+          PYTHONPATH=src python3 -m esac_bench --json > /tmp/esac-report.json
+          python3 tools/ci_contract_gate.py --report /tmp/esac-report.json
+
+      - name: Run cross-repository integration smoke
+        run: python3 tools/cross_repo_smoke.py
+
+      - name: Check JSON fixtures and whitespace
+        run: |
+          python3 -m json.tool data/legacy-calibration.json >/dev/null
+          python3 -m json.tool data/diagnostic-case-studies.json >/dev/null
+          git diff --check

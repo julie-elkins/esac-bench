@@ -1,0 +1,52 @@
+{
+  "record_type": "legacy_calibration",
+  "data_class": "public_metadata_only",
+  "native_esac_score": false,
+  "sources": [
+    {
+      "source_id": "harbor-matched-terminal-bench-cohort",
+      "repository": "julie-elkins/harbor-assurance-adapter",
+      "source_revision": "c28dba6",
+      "protocol": "Harbor Terminal-Bench 2.0 matched 10-task cohort",
+      "results": {
+        "codex": {
+          "clean_executions": 10,
+          "benchmark_passes": 7
+        },
+        "mini_swe_agent": {
+          "clean_executions": 9,
+          "benchmark_passes": 6
+        }
+      },
+      "supports": [
+        "execution reliability and benchmark correctness should be reported separately"
+      ],
+      "does_not_support": [
+        "an ESAC-Bench score",
+        "a causal explanation for provider or environment failures"
+      ]
+    },
+    {
+      "source_id": "agent-assurance-harness-synthetic-contracts",
+      "repository": "julie-elkins/agent-reliability-lab",
+      "source_revision": "8d8c7dd",
+      "protocol": "offline synthetic evidence-contract scenarios",
+      "results": {
+        "scenario_classes": [
+          "false completion",
+          "missing evidence",
+          "unauthorized side effect",
+          "stale or conflicting source"
+        ]
+      },
+      "supports": [
+        "metadata-only evidence contracts can be tested with controlled mutations"
+      ],
+      "does_not_support": [
+        "live provider quality",
+        "native ESAC-Bench task scores"
+      ]
+    }
+  ]
+}
+
