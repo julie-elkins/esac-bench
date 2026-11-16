@@ -1,8 +1,10 @@
 import json
 import os
 from pathlib import Path
+import signal
 import stat
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -325,6 +327,54 @@ printf 'bounded output\n'
             self.assertEqual(result.status, "timed_out")
             self.assertEqual(result.native_outcome, "not_observed")
             self.assertTrue((root / "runs/esac-receipt.json").exists())
+
+    def test_live_harbor_timeout_terminates_child_process_group(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "config").mkdir()
+            (root / "config/task.toml").write_text("task = 1\n", encoding="utf-8")
+            child_pid_file = root / "child.pid"
+            executable = root / "fake-harbor"
+            executable.write_text(
+                f"""#!/bin/sh
+sleep 30 &
+echo $! > "{child_pid_file}"
+while :; do sleep 1; done
+""",
+                encoding="utf-8",
+            )
+            executable.chmod(executable.stat().st_mode | stat.S_IXUSR)
+            request = self._live_request(runtime=0.2)
+            child_pid = None
+            with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}, clear=False):
+                try:
+                    result = run_harbor_live(
+                        request,
+                        config_path="config/task.toml",
+                        receipt_path="runs/provider-receipt.json",
+                        metadata_receipt_path="runs/esac-receipt.json",
+                        output_path="runs/provider-output.log",
+                        workspace_root=root,
+                        runner_prefix=(str(executable),),
+                    )
+                    child_pid = int(child_pid_file.read_text(encoding="utf-8"))
+                    for _ in range(20):
+                        try:
+                            os.kill(child_pid, 0)
+                        except ProcessLookupError:
+                            break
+                        time.sleep(0.05)
+                    else:
+                        self.fail("timed-out child process was still running")
+                finally:
+                    if child_pid is not None:
+                        try:
+                            os.kill(child_pid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
+
+            self.assertEqual(result.status, "timed_out")
+            self.assertIn("runtime bound", result.limitation)
 
     def test_live_harbor_stops_on_output_cap(self):
         with tempfile.TemporaryDirectory() as temporary:
