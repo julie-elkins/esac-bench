@@ -344,3 +344,46 @@ Julie and Codex on 2026-11-16.
 - No raw trajectory, prompt, provider response, credential, or local path was
   added to the public repository.
 
+## Phase 10 — offline Harbor receipt evaluator
+
+### Decided
+
+Add a metadata-only Harbor receipt evaluator that maps one reviewed
+`receipt-v1` record to `pass`, `fail`, `unknown`, or `not_observed` without
+reading raw provider content.
+
+### Instead of
+
+Treating Harbor process completion as a benchmark pass, manually interpreting
+each receipt, or importing raw trajectories into ESAC-Bench.
+
+### Why
+
+The live adapter correctly separates execution evidence from native task
+correctness, but its outer result remains `native_outcome: unknown` until a
+receipt evaluator performs the second step. The evaluator closes that gap
+while preserving the public metadata boundary: `pass` requires clean
+execution, a passed benchmark status, and complete validated trajectory
+metadata.
+
+### Costs if wrong
+
+A strict allow-list can reject a future Harbor metadata field until the
+receipt contract is reviewed. That is safer than silently accepting provider
+content or treating an unreviewed field as evidence. The evaluator also
+supports one receipt at a time; it does not create a cohort score.
+
+### Decided by
+
+Julie and Codex on 2026-11-16.
+
+### Verification
+
+- The synthetic receipt evaluator returns `native_outcome: pass`.
+- The actual local `regex-log` receipt returns `native_outcome: pass`,
+  `evidence_status: complete`, and `trajectory_status: present`.
+- Timeouts return `not_observed`; incomplete evidence returns `unknown`.
+- Raw content, unknown fields, and invalid metadata types are refused.
+- Twenty-nine unit tests pass, the native CI gate passes, and the evaluator
+  runs in the CI workflow without provider access.
+
