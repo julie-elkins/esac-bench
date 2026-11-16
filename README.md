@@ -39,7 +39,7 @@ From the repository root:
 ```bash
 PYTHONPATH=src python -m esac_bench
 PYTHONPATH=src python -m esac_bench --json
-python -m unittest discover -s tests -v
+PYTHONPATH=src python3 -m unittest discover -s tests -v
 ```
 
 The output is metadata-only. It includes task identifiers, profile names,

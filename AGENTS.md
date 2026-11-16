@@ -35,7 +35,7 @@ not passing results.
 Use the standard-library runner and tests before committing:
 
 ```bash
-python -m unittest discover -s tests -v
+PYTHONPATH=src python3 -m unittest discover -s tests -v
 python -m esac_bench --json
 ```
 
