@@ -1,0 +1,28 @@
+[
+  {
+    "case_id": "raman-unit-contract",
+    "source_repository": "julie-elkins/harbor-assurance-adapter",
+    "source_type": "diagnostic_ablation",
+    "finding": "Making a unit contract explicit changed one task outcome in a bounded diagnostic.",
+    "supports": [
+      "task contracts should state units and verification requirements explicitly"
+    ],
+    "does_not_support": [
+      "a general causal claim about model capability",
+      "an ESAC-Bench score"
+    ]
+  },
+  {
+    "case_id": "qemu-compatibility",
+    "source_repository": "julie-elkins/harbor-assurance-adapter",
+    "source_type": "environment_diagnostic",
+    "finding": "A compatibility instruction and restored provider funding enabled a clean bounded diagnostic.",
+    "supports": [
+      "environment and provider conditions must be recorded separately from task correctness"
+    ],
+    "does_not_support": [
+      "a matched-cohort leaderboard result",
+      "a causal claim that the instruction alone caused the change"
+    ]
+  }
+]
