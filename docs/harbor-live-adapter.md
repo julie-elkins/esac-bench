@@ -56,6 +56,7 @@ PYTHONPATH=src python3 tools/harbor_live_smoke.py \
   --max-runtime-seconds 900 \
   --output-cap-bytes 1000000 \
   --spend-ceiling-usd 5 \
+  --runner-prefix uv run harbor-assurance run \
   --approve-live-run
 ```
 

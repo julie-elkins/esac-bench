@@ -248,7 +248,7 @@ printf 'bounded output\n'
                     metadata_receipt_path="runs/esac-receipt.json",
                     output_path="runs/provider-output.log",
                     workspace_root=root,
-                    harbor_executable=executable,
+                    runner_prefix=(executable,),
                 )
 
             self.assertEqual(result.status, "completed")
@@ -278,7 +278,7 @@ printf 'bounded output\n'
                     metadata_receipt_path="runs/esac-receipt.json",
                     output_path="runs/provider-output.log",
                     workspace_root=root,
-                    harbor_executable="/missing/harbor",
+                    runner_prefix=("/missing/harbor",),
                 )
 
             self.assertEqual(result["error"], "credential_unavailable")
@@ -298,7 +298,7 @@ printf 'bounded output\n'
                     metadata_receipt_path="runs/esac-receipt.json",
                     output_path="runs/provider-output.log",
                     workspace_root=root,
-                    harbor_executable="/missing/harbor",
+                    runner_prefix=("/missing/harbor",),
                 )
 
             self.assertEqual(result["error"], "unsafe_output_path")
@@ -319,7 +319,7 @@ printf 'bounded output\n'
                     metadata_receipt_path="runs/esac-receipt.json",
                     output_path="runs/provider-output.log",
                     workspace_root=root,
-                    harbor_executable=executable,
+                    runner_prefix=(executable,),
                 )
 
             self.assertEqual(result.status, "timed_out")
@@ -341,7 +341,7 @@ printf 'bounded output\n'
                     metadata_receipt_path="runs/esac-receipt.json",
                     output_path="runs/provider-output.log",
                     workspace_root=root,
-                    harbor_executable=executable,
+                    runner_prefix=(executable,),
                 )
 
             self.assertEqual(result.status, "failed")

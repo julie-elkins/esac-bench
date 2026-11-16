@@ -41,7 +41,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-cap-bytes", type=int, default=1_000_000)
     parser.add_argument("--spend-ceiling-usd", type=float, default=5.0)
     parser.add_argument("--workspace-root", type=Path, default=ROOT)
-    parser.add_argument("--harbor-executable", default="harbor")
+    parser.add_argument(
+        "--runner-prefix",
+        nargs="+",
+        default=("harbor", "run"),
+        help="Shell-free runner prefix, such as: uv run harbor-assurance run.",
+    )
     parser.add_argument(
         "--approve-live-run",
         action="store_true",
@@ -77,7 +82,7 @@ def main() -> int:
         metadata_receipt_path=args.metadata_receipt,
         output_path=args.raw_output,
         workspace_root=args.workspace_root,
-        harbor_executable=args.harbor_executable,
+        runner_prefix=tuple(args.runner_prefix),
     )
     payload = result.to_dict() if hasattr(result, "to_dict") else result
     print(json.dumps(payload, indent=2, sort_keys=True))

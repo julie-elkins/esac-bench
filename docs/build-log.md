@@ -262,3 +262,40 @@ Julie and Codex on 2026-11-16.
 - The dry-run, native contract gate, and cross-repository smoke still pass.
 - No provider call or paid run was made.
 
+## Phase 8 — Harbor wrapper command alignment
+
+### Decided
+
+Allow the live worker to receive an explicit shell-free runner prefix so the
+Harbor repository can invoke its validated `uv run harbor-assurance run`
+wrapper instead of treating the wrapper TOML as raw Harbor job configuration.
+
+### Instead of
+
+Calling raw `harbor run --config` with the adapter repository's TOML, or
+silently translating the configuration into a second command format.
+
+### Why
+
+Raw Harbor accepts its own YAML/JSON job schema, while this project’s TOML is
+owned by the Harbor Assurance Adapter wrapper. Using the wrapper preserves the
+existing credential transport, Docker shim, bounded process capture, and
+metadata receipt behavior.
+
+### Costs if wrong
+
+The live worker now has one additional command-prefix parameter to validate.
+The first smoke remains specific to this Harbor wrapper and is not yet a
+portable raw-Harbor adapter.
+
+### Decided by
+
+Julie and Codex on 2026-11-16.
+
+### Verification
+
+- Harbor help confirms raw `harbor run --config` expects Harbor YAML/JSON.
+- The wrapper help confirms `uv run harbor-assurance run --config ... --receipt ...`.
+- Nineteen ESAC unit tests pass after the change.
+- No provider call or paid run was made.
+
