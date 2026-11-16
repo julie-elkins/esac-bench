@@ -90,6 +90,12 @@ claiming a benchmark observation. See
 [`docs/harbor-dry-run-adapter.md`](docs/harbor-dry-run-adapter.md) and the
 provider-neutral [`docs/live-adapter-contract.md`](docs/live-adapter-contract.md).
 
+The repository also contains a bounded live worker for one explicitly approved
+Harbor smoke. It is not a leaderboard adapter: it reports execution and
+evidence metadata, while native task correctness remains unknown until the
+receipt is evaluated. See
+[`docs/harbor-live-adapter.md`](docs/harbor-live-adapter.md).
+
 ## Existing research used as calibration
 
 The public Harbor study and Agent Assurance Harness are connected as
@@ -112,7 +118,8 @@ remains supportable across outcome, recovery, and evidence dimensions.
 ## Status
 
 The repository is an early public research prototype. The native offline
-contract is the source of truth for future ESAC-Bench results. Live-provider
-execution, a leaderboard, and a composite score are deliberately out of scope
-until the contract and mutation controls have been independently reviewed.
+contract is the source of truth for ESAC-Bench results. A single bounded live
+smoke is now supported for execution-plumbing validation; a leaderboard and
+composite score remain out of scope until live evidence and task evaluation
+have been independently reviewed.
 

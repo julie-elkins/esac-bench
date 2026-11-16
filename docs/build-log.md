@@ -219,3 +219,46 @@ Julie and Codex on 2026-11-16.
 - Traversal paths are refused.
 - The CI workflow runs the dry-run adapter.
 
+## Phase 7 — bounded Harbor live worker
+
+### Decided
+
+Implement one supervised `mini-swe-agent` Harbor worker behind the approved
+adapter contract. Keep the provider receipt, ESAC metadata receipt, and raw
+process output in separate ignored local paths.
+
+### Instead of
+
+Overwriting Harbor's receipt with benchmark metadata, forwarding the entire
+shell environment, allowing automatic retries, or exposing a live command in
+CI.
+
+### Why
+
+The provider receipt is the raw evidence artifact, while the ESAC receipt is a
+metadata-only interpretation. Separating them preserves the evidence needed
+for audit without making raw provider material part of the public benchmark.
+The explicit approval flag and one-attempt limit keep a first smoke from
+becoming an unattended spend loop.
+
+### Costs if wrong
+
+The first worker supports only one bounded smoke and reports native task
+correctness as unknown until a separate evaluator consumes the local receipt.
+It also requires a supervised operator and does not provide a leaderboard
+score.
+
+### Decided by
+
+Julie and Codex on 2026-11-16.
+
+### Verification
+
+- Nineteen unit tests pass.
+- Missing credentials, unsafe output paths, timeouts, output caps, and provider
+  receipt preservation are covered by synthetic tests.
+- The worker uses `shell=False`, a minimal child environment, one attempt, and
+  process-group termination on timeout.
+- The dry-run, native contract gate, and cross-repository smoke still pass.
+- No provider call or paid run was made.
+

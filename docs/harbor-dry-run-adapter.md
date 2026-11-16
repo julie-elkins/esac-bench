@@ -25,9 +25,10 @@ the adapter does not yet read `ANTHROPIC_API_KEY`, start Finch or Docker, call
 Harbor, or contact Anthropic. A dry run is not evidence that the agent works;
 it is evidence that the adapter has constructed a bounded plan.
 
-## Live implementation gate
+## Live worker boundary
 
-A live worker must be a separate change and must:
+The bounded live worker is now implemented separately from this dry-run
+planner. It must:
 
 1. call `validate_request` before reading a credential;
 2. use the validated argument vector with `shell=False`;
@@ -35,3 +36,6 @@ A live worker must be a separate change and must:
 4. write a metadata-only receipt;
 5. pass the receipt through the ESAC evaluator;
 6. report refusal, timeout, missing evidence, and provider failure separately.
+
+See [`docs/harbor-live-adapter.md`](harbor-live-adapter.md) for the supervised
+one-task smoke procedure. The dry-run remains the required preflight check.
