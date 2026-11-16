@@ -69,13 +69,12 @@ def _is_ignored_run_path(relative_path: str) -> bool:
 
 def _harbor_command(
     *,
-    executable: str,
+    runner_prefix: tuple[str, ...],
     config_path: str,
     receipt_path: str,
 ) -> tuple[str, ...]:
     return (
-        executable,
-        "run",
+        *runner_prefix,
         "--config",
         config_path,
         "--receipt",
@@ -175,7 +174,7 @@ def build_harbor_dry_run(
     )
     return HarborDryRunPlan(
         command=_harbor_command(
-            executable="harbor",
+            runner_prefix=("harbor", "run"),
             config_path=safe_config,
             receipt_path=safe_receipt,
         ),
@@ -248,7 +247,7 @@ def run_harbor_live(
     metadata_receipt_path: str,
     output_path: str,
     workspace_root: Path,
-    harbor_executable: str = "harbor",
+    runner_prefix: tuple[str, ...] = ("harbor", "run"),
 ) -> AdapterResult | dict[str, str]:
     """Run one bounded Harbor command and emit a metadata-only receipt."""
 
@@ -273,11 +272,11 @@ def run_harbor_live(
             "The first live adapter permits exactly one attempt.",
             "Set max_attempts=1; retry policy requires a separate experiment.",
         )
-    if not harbor_executable.strip():
+    if not runner_prefix or any(not part.strip() for part in runner_prefix):
         return _refusal(
-            "invalid_executable",
-            "The Harbor executable name is empty.",
-            "Provide a fixed executable name or path.",
+            "invalid_runner_prefix",
+            "The runner prefix is empty.",
+            "Provide a fixed non-empty argument vector prefix.",
         )
     if not all(
         _is_ignored_run_path(path)
@@ -354,7 +353,7 @@ def run_harbor_live(
 
     output_file.parent.mkdir(parents=True, exist_ok=True)
     command = _harbor_command(
-        executable=harbor_executable,
+        runner_prefix=runner_prefix,
         config_path=safe_config,
         receipt_path=safe_receipt,
     )
@@ -391,9 +390,9 @@ def run_harbor_live(
                 output_exceeded = True
     except FileNotFoundError:
         return _refusal(
-            "executable_unavailable",
-            "The Harbor executable could not be started.",
-            "Install or expose the reviewed Harbor executable, then rerun the smoke test.",
+            "runner_unavailable",
+            "The configured runner could not be started.",
+            "Install or expose the reviewed runner prefix, then rerun the smoke test.",
         )
     except OSError as error:
         return _refusal(
