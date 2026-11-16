@@ -1,6 +1,10 @@
 import json
+import os
 from pathlib import Path
+import stat
+import tempfile
 import unittest
+from unittest.mock import patch
 
 from esac_bench.adapters import load_calibration_record, load_diagnostic_cases
 from esac_bench.live_contract import (
@@ -11,7 +15,7 @@ from esac_bench.live_contract import (
     validate_request,
     validate_result,
 )
-from esac_bench.harbor_adapter import build_harbor_dry_run
+from esac_bench.harbor_adapter import build_harbor_dry_run, run_harbor_live
 from esac_bench.runner import run_suite
 from esac_bench.schema import SCHEMA_VERSION, validate_native_report
 
@@ -191,6 +195,157 @@ class RunnerTests(unittest.TestCase):
             receipt_path="runs/result.json",
         )
         self.assertEqual(refusal["error"], "invalid_config_path")
+
+    def _live_request(self, *, runtime=2, output_cap=1024):
+        return AdapterRequest(
+            run_id="live-run-1",
+            adapter_id="mini-swe-agent",
+            provider="anthropic",
+            model="claude-opus-4-6",
+            task_id="coding-interruption",
+            execution_mode="live",
+            credential_env_var="ANTHROPIC_API_KEY",
+            max_runtime_seconds=runtime,
+            max_attempts=1,
+            output_cap_bytes=output_cap,
+            spend_ceiling_usd=5,
+            stop_condition="stop after one task or any refusal",
+            tool_scope=("harbor-runner",),
+            task_contract_digest=digest_identifier("task"),
+            evidence_contract_digest=digest_identifier("evidence"),
+            human_approval=True,
+        )
+
+    def _fake_harbor(self, root, body):
+        executable = root / "fake-harbor"
+        executable.write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8")
+        executable.chmod(executable.stat().st_mode | stat.S_IXUSR)
+        return str(executable)
+
+    def test_live_harbor_preserves_raw_receipt_and_writes_metadata(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "config").mkdir()
+            (root / "config/task.toml").write_text("task = 1\n", encoding="utf-8")
+            executable = self._fake_harbor(
+                root,
+                """receipt=""
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = "--receipt" ]; then shift; receipt="$1"; fi
+  shift
+done
+mkdir -p "$(dirname "$receipt")"
+printf '{"raw":"local-only"}\n' > "$receipt"
+printf 'bounded output\n'
+""",
+            )
+            request = self._live_request()
+            with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}, clear=False):
+                result = run_harbor_live(
+                    request,
+                    config_path="config/task.toml",
+                    receipt_path="runs/provider-receipt.json",
+                    metadata_receipt_path="runs/esac-receipt.json",
+                    output_path="runs/provider-output.log",
+                    workspace_root=root,
+                    harbor_executable=executable,
+                )
+
+            self.assertEqual(result.status, "completed")
+            self.assertEqual(result.returncode, 0)
+            self.assertEqual(result.evidence_status, "complete")
+            self.assertTrue((root / "runs/provider-receipt.json").exists())
+            self.assertIn(
+                '"raw":"local-only"',
+                (root / "runs/provider-receipt.json").read_text(encoding="utf-8"),
+            )
+            metadata = json.loads(
+                (root / "runs/esac-receipt.json").read_text(encoding="utf-8")
+            )
+            self.assertNotIn("raw", json.dumps(metadata))
+
+    def test_live_harbor_refuses_missing_credential_before_start(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "config").mkdir()
+            (root / "config/task.toml").write_text("task = 1\n", encoding="utf-8")
+            request = self._live_request()
+            with patch.dict(os.environ, {}, clear=True):
+                result = run_harbor_live(
+                    request,
+                    config_path="config/task.toml",
+                    receipt_path="runs/provider-receipt.json",
+                    metadata_receipt_path="runs/esac-receipt.json",
+                    output_path="runs/provider-output.log",
+                    workspace_root=root,
+                    harbor_executable="/missing/harbor",
+                )
+
+            self.assertEqual(result["error"], "credential_unavailable")
+            self.assertFalse((root / "runs").exists())
+
+    def test_live_harbor_refuses_public_output_path(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "config").mkdir()
+            (root / "config/task.toml").write_text("task = 1\n", encoding="utf-8")
+            request = self._live_request()
+            with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}, clear=False):
+                result = run_harbor_live(
+                    request,
+                    config_path="config/task.toml",
+                    receipt_path="README.receipt.json",
+                    metadata_receipt_path="runs/esac-receipt.json",
+                    output_path="runs/provider-output.log",
+                    workspace_root=root,
+                    harbor_executable="/missing/harbor",
+                )
+
+            self.assertEqual(result["error"], "unsafe_output_path")
+            self.assertFalse((root / "runs").exists())
+
+    def test_live_harbor_times_out_and_writes_metadata(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "config").mkdir()
+            (root / "config/task.toml").write_text("task = 1\n", encoding="utf-8")
+            executable = self._fake_harbor(root, "sleep 1")
+            request = self._live_request(runtime=0.1)
+            with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}, clear=False):
+                result = run_harbor_live(
+                    request,
+                    config_path="config/task.toml",
+                    receipt_path="runs/provider-receipt.json",
+                    metadata_receipt_path="runs/esac-receipt.json",
+                    output_path="runs/provider-output.log",
+                    workspace_root=root,
+                    harbor_executable=executable,
+                )
+
+            self.assertEqual(result.status, "timed_out")
+            self.assertEqual(result.native_outcome, "not_observed")
+            self.assertTrue((root / "runs/esac-receipt.json").exists())
+
+    def test_live_harbor_stops_on_output_cap(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "config").mkdir()
+            (root / "config/task.toml").write_text("task = 1\n", encoding="utf-8")
+            executable = self._fake_harbor(root, "head -c 2048 /dev/zero")
+            request = self._live_request(output_cap=10)
+            with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}, clear=False):
+                result = run_harbor_live(
+                    request,
+                    config_path="config/task.toml",
+                    receipt_path="runs/provider-receipt.json",
+                    metadata_receipt_path="runs/esac-receipt.json",
+                    output_path="runs/provider-output.log",
+                    workspace_root=root,
+                    harbor_executable=executable,
+                )
+
+            self.assertEqual(result.status, "failed")
+            self.assertIn("output cap", result.limitation)
 
 
 if __name__ == "__main__":
