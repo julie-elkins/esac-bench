@@ -92,8 +92,8 @@ provider-neutral [`docs/live-adapter-contract.md`](docs/live-adapter-contract.md
 
 The repository also contains a bounded live worker for one explicitly approved
 Harbor smoke. It is not a leaderboard adapter: it reports execution and
-evidence metadata, while native task correctness remains unknown until the
-receipt is evaluated. See
+evidence metadata, while native task correctness is evaluated separately from
+the local metadata-only receipt. See
 [`docs/harbor-live-adapter.md`](docs/harbor-live-adapter.md).
 
 ## Existing research used as calibration

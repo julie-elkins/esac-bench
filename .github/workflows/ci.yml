@@ -31,6 +31,11 @@ jobs:
       - name: Run Harbor dry-run adapter
         run: PYTHONPATH=src python3 tools/harbor_dry_run.py
 
+      - name: Run Harbor receipt evaluator
+        run: |
+          PYTHONPATH=src python3 tools/evaluate_harbor_receipt.py \
+            --receipt tests/fixtures/harbor-receipt-passed.json
+
       - name: Check JSON fixtures and whitespace
         run: |
           python3 -m json.tool data/legacy-calibration.json >/dev/null

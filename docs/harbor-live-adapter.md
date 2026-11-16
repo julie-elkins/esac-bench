@@ -85,3 +85,16 @@ observation. The outer ESAC metadata receipt remains
 `native_outcome: unknown` by design until a separate receipt evaluator
 interprets native task correctness. Raw receipts and trajectories remain local
 and are not part of this repository.
+
+The offline evaluator is available for that second step:
+
+```bash
+PYTHONPATH=src python3 tools/evaluate_harbor_receipt.py \
+  --receipt /path/to/local/provider-receipt.json
+```
+
+It returns `pass` only when the receipt shows clean execution, a passed
+benchmark status, and complete validated evidence. A clean benchmark failure
+returns `fail`; timeouts, refusals, missing outcomes, and incomplete evidence
+remain `not_observed` or `unknown`. Unsupported fields and raw content are
+refused.
