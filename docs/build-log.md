@@ -299,3 +299,48 @@ Julie and Codex on 2026-11-16.
 - Nineteen ESAC unit tests pass after the change.
 - No provider call or paid run was made.
 
+## Phase 9 — selected regex-log clean-completion diagnostic
+
+### Decided
+
+Record `esac-harbor-live-regex-log-v1` as a clean success-path diagnostic:
+one completed execution, one successful trial, one benchmark pass, and a
+present validated trajectory. Keep it outside the native ESAC denominator and
+any leaderboard-style comparison.
+
+### Instead of
+
+Treating the adapter metadata result's `native_outcome: unknown` as a task
+failure, adding this one-task result to native ESAC metrics, or spending more
+credits on another live smoke immediately.
+
+### Why
+
+The provider receipt records `benchmark_status: passed`,
+`benchmark_score: 1.0`, `runner_successful_trials: 1`, and no errored trials.
+ATIF v1.2 metadata validation passed with 18 steps and 16 tool calls. The
+observed provider cost was `$0.40285075`, and the run completed in about 288
+seconds. The outer adapter intentionally records execution and evidence
+plumbing; receipt evaluation records native task correctness.
+
+### Costs if wrong
+
+Calling this a general reliability result would overstate evidence from one
+selected task. Calling it a native ESAC score would mix protocols and make the
+denominator misleading. The bounded diagnostic therefore supports only the
+claim that this selected success path completed with complete metadata
+evidence.
+
+### Decided by
+
+Julie and Codex on 2026-11-16.
+
+### Verification
+
+- Outer metadata: `status: completed`, `evidence_status: complete`, and
+  `trajectory_status: present`.
+- Provider receipt: `status: completed`, `benchmark_status: passed`,
+  `benchmark_score: 1.0`, and `runner_errored_trials: 0`.
+- No raw trajectory, prompt, provider response, credential, or local path was
+  added to the public repository.
+

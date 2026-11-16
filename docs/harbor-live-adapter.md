@@ -71,3 +71,17 @@ output separately; never copy them into this public repository.
 - `refused` means the adapter did not start a provider call.
 - `evidence_status: incomplete` means the expected Harbor receipt was absent
   or empty.
+
+## Recorded success-path diagnostic
+
+The supervised `esac-harbor-live-regex-log-v1` diagnostic completed one
+explicitly selected public task in about 288 seconds. Its metadata-only
+provider receipt records one successful execution, `benchmark_status: passed`,
+`benchmark_score: 1.0`, complete ATIF v1.2 metadata, and a present trajectory.
+The observed provider cost was `$0.40285075`.
+
+This is a calibration diagnostic, not a native ESAC score or leaderboard
+observation. The outer ESAC metadata receipt remains
+`native_outcome: unknown` by design until a separate receipt evaluator
+interprets native task correctness. Raw receipts and trajectories remain local
+and are not part of this repository.

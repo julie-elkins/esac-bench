@@ -119,7 +119,9 @@ remains supportable across outcome, recovery, and evidence dimensions.
 
 The repository is an early public research prototype. The native offline
 contract is the source of truth for ESAC-Bench results. A single bounded live
-smoke is now supported for execution-plumbing validation; a leaderboard and
-composite score remain out of scope until live evidence and task evaluation
-have been independently reviewed.
+smoke is now supported for execution-plumbing validation. The selected
+`regex-log` success-path diagnostic completed with a benchmark pass, but it
+remains calibration evidence outside native ESAC denominators. A leaderboard
+and composite score remain out of scope until live evidence and task
+evaluation have been independently reviewed.
 
