@@ -387,3 +387,47 @@ Julie and Codex on 2026-11-16.
 - Twenty-nine unit tests pass, the native CI gate passes, and the evaluator
   runs in the CI workflow without provider access.
 
+## Phase 11 — refreshed-key regex-log replication
+
+### Decided
+
+Record `esac-harbor-live-regex-log-v2` as a second clean replication of the
+explicitly selected `regex-log` diagnostic. Keep the two one-task runs outside
+native ESAC and leaderboard-style denominators.
+
+### Instead of
+
+Treating the refreshed credential as evidence of model improvement, adding the
+two one-task passes to the matched cohort, or running another repeat without a
+new research question.
+
+### Why
+
+The v2 provider receipt records one completed trial, one benchmark pass, ATIF
+v1.2 validation, complete trajectory metadata, and observed cost
+`$0.45102025`. The earlier v1 receipt also passed with observed cost
+`$0.40285075`. The two runs confirm that the refreshed credential supports the
+bounded success path, while different runtimes and trajectories are expected
+run variation rather than a controlled model change.
+
+### Costs if wrong
+
+Calling two passes on one task general reliability evidence would overstate the
+sample. Stopping here leaves ten-task performance under the refreshed
+credential unmeasured, but avoids spending more without a pre-specified
+question and preserves the study's denominator discipline.
+
+### Decided by
+
+Julie and Codex on 2026-11-16.
+
+### Verification
+
+- v2 outer metadata: `status: completed`, `evidence_status: complete`, and
+  `trajectory_status: present`.
+- v2 evaluated outcome: `pass`; benchmark score `1.0`.
+- v1 and v2: two completed executions, two successful trials, two benchmark
+  passes.
+- No raw receipt, trajectory, prompt, provider response, or credential was
+  added to the public repository.
+

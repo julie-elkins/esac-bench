@@ -74,17 +74,20 @@ output separately; never copy them into this public repository.
 
 ## Recorded success-path diagnostic
 
-The supervised `esac-harbor-live-regex-log-v1` diagnostic completed one
-explicitly selected public task in about 288 seconds. Its metadata-only
-provider receipt records one successful execution, `benchmark_status: passed`,
-`benchmark_score: 1.0`, complete ATIF v1.2 metadata, and a present trajectory.
-The observed provider cost was `$0.40285075`.
+The supervised `esac-harbor-live-regex-log-v1` and `v2` diagnostics each
+completed the same explicitly selected public task. Both metadata-only
+provider receipts record one successful execution,
+`benchmark_status: passed`, `benchmark_score: 1.0`, complete ATIF v1.2
+metadata, and a present trajectory. The observed provider costs were
+`$0.40285075` and `$0.45102025`; the combined result is 2/2 passes on one
+task.
 
-This is a calibration diagnostic, not a native ESAC score or leaderboard
-observation. The outer ESAC metadata receipt remains
+This is a replicated calibration diagnostic, not a native ESAC score or
+leaderboard observation. The outer ESAC metadata receipts remain
 `native_outcome: unknown` by design until a separate receipt evaluator
-interprets native task correctness. Raw receipts and trajectories remain local
-and are not part of this repository.
+interprets native task correctness. The replication does not establish
+general reliability or model improvement. Raw receipts and trajectories remain
+local and are not part of this repository.
 
 The offline evaluator is available for that second step:
 
