@@ -61,6 +61,35 @@ The reference profiles are deterministic evaluator controls. They demonstrate
 that the benchmark catches planted failures; they do not represent model
 capability.
 
+## Recovery Track
+
+The `recovery-v0` track is a separate native track with seven synthetic cases.
+It models a failure point, a bounded recovery attempt, the expected final state,
+the expected side effects, and the evidence required to support the recovery
+claim. It does not execute destructive actions or contact a provider.
+
+The cases are:
+
+1. interruption before a side effect;
+2. interruption after a side effect but before acknowledgement;
+3. retry after an ambiguous timeout;
+4. restoration after a destructive action;
+5. resumption from a stale checkpoint;
+6. handoff during recovery; and
+7. recovery that completes before all evidence is recorded.
+
+The track reports these metrics separately:
+
+- `final_state_restoration`;
+- `side_effect_integrity`;
+- `recovery_evidence_completeness`; and
+- `bounded_recovery`.
+
+`claim_support` is derived from those four metrics and the reported completion
+claim. A passing recovery case therefore requires all four controls, but the
+report does not collapse them into a composite score. Recovery cost is a
+bounded relative control value, not a provider billing observation.
+
 ## Acceptance criteria
 
 The v0 contract is accepted when:
@@ -70,7 +99,8 @@ The v0 contract is accepted when:
 3. naive controls fail the intended dimensions;
 4. controlled mutations are visible in metadata-only output;
 5. calibration records remain outside native ESAC denominators;
-6. public-content scans find no credentials, private data, or raw traces.
+6. the Recovery Track catches its planted state, effect, and evidence failures;
+7. public-content scans find no credentials, private data, or raw traces.
 
 ## Mutation controls
 
@@ -91,9 +121,9 @@ score.
 
 Every native report declares `schema_version`, `protocol`, `data_class`,
 `task_contract_ids`, `task_contract_digest`, dimension summaries, mutation
-results, and a report digest. The schema validator rejects reports that
-contain raw prompts, tool arguments, provider responses, trajectories, or
-credentials.
+results, the `recovery-v0` track, and a report digest. The schema validator
+rejects reports that contain raw prompts, tool arguments, provider responses,
+trajectories, or credentials.
 
 ## Cross-repository records
 

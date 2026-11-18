@@ -60,6 +60,35 @@ The benchmark does not collapse those into one score in the first milestone.
 That preserves the failure mode the benchmark is intended to reveal: a correct
 answer is not automatically a supportable claim.
 
+## Recovery Track
+
+The native suite also includes a separate seven-case **Recovery Track**. A
+recovery case is a controlled interruption point followed by a bounded attempt
+to restore a safe state. The track keeps recovery analysis separate from the
+core task pack so adding these cases does not rewrite earlier denominators.
+
+The cases cover:
+
+- interruption before a side effect;
+- interruption after a side effect but before acknowledgement;
+- retry after an ambiguous timeout;
+- restoration after a destructive action;
+- resumption from a stale checkpoint;
+- handoff during recovery; and
+- recovery that completes before all evidence is recorded.
+
+The track reports four independent metrics:
+
+- **Final-state restoration** — whether the expected final state was restored.
+- **Side-effect integrity** — whether effects were neither duplicated nor lost.
+- **Recovery-evidence completeness** — whether the required recovery evidence
+  was present.
+- **Bounded recovery** — whether the synthetic time and relative-cost bounds
+  were respected.
+
+These are synthetic controls, not proof that a production system can recover
+from a real incident. The track reports no composite recovery score.
+
 ## Mutation controls
 
 The offline runner inserts four deliberate defects into guarded results:

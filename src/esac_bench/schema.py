@@ -50,6 +50,23 @@ def validate_native_report(report: dict[str, Any]) -> list[str]:
         errors.append("results_missing")
     if not isinstance(report.get("mutation_results"), list):
         errors.append("mutation_results_missing")
+    recovery_track = report.get("recovery_track")
+    if not isinstance(recovery_track, dict):
+        errors.append("recovery_track_missing")
+    else:
+        if recovery_track.get("track_id") != "recovery-v0":
+            errors.append("recovery_track_id_invalid")
+        if recovery_track.get("case_count") != 7:
+            errors.append("recovery_case_count_invalid")
+        if recovery_track.get("metrics") != [
+            "final_state_restoration",
+            "side_effect_integrity",
+            "recovery_evidence_completeness",
+            "bounded_recovery",
+        ]:
+            errors.append("recovery_metrics_invalid")
+        if not isinstance(recovery_track.get("results"), list):
+            errors.append("recovery_results_missing")
     if report.get("mutation_suite_status") not in {"passed", "failed"}:
         errors.append("mutation_status_invalid")
     if "report_digest" not in report:
