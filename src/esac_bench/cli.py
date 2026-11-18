@@ -18,7 +18,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     print("ESAC-Bench offline v0")
-    print(f"Tasks: {report['task_count']} | Profiles: {', '.join(report['profiles'])}")
+    print(
+        f"Tasks: {report['task_count']} | "
+        f"Recovery cases: {report['recovery_case_count']} | "
+        f"Profiles: {', '.join(report['profiles'])}"
+    )
     for profile, summary in report["summaries"].items():
         print(f"\n{profile}:")
         for dimension, counts in summary.items():

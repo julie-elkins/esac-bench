@@ -431,3 +431,48 @@ Julie and Codex on 2026-11-16.
 - No raw receipt, trajectory, prompt, provider response, or credential was
   added to the public repository.
 
+## Phase 20 — add the ESAC-Bench Recovery Track
+
+### Decided
+
+Add a separate native `recovery-v0` track with seven synthetic recovery cases:
+before-side-effect, after-side-effect-before-ack, retry-after-timeout,
+destructive-action-restore, stale-checkpoint, handoff-during-recovery, and
+incomplete-recovery-evidence. Report final-state restoration, side-effect
+integrity, recovery-evidence completeness, and bounded recovery separately.
+
+### Instead of
+
+Adding recovery cases to the existing six-task denominator, importing real
+Harbor or Agent Assurance Harness recovery records as native scores, or
+executing destructive actions to make the benchmark appear more realistic.
+
+### Why
+
+The recovery post's central question—whether a system can return to a safe,
+known state after interruption—requires more than a generic recovery-safety
+dimension. A named track makes the failure points and acceptance conditions
+reviewable while preserving the original core-task comparisons. Synthetic
+controls provide repeatable evaluator evidence without provider cost or
+operational risk.
+
+### Costs if wrong
+
+The track may not predict production disaster recovery; it is an offline
+benchmark control, not a deployment rehearsal. Keeping that limitation visible
+is safer than implying that seven synthetic cases prove operational resilience.
+
+### Decided by
+
+Julie and Codex on 2026-11-18.
+
+### Verification
+
+- Guarded recovery controls pass all four recovery metrics across all seven
+  cases.
+- Naive controls expose distinct state, side-effect, and evidence failures.
+- The core task count remains six, and the Recovery Track reports seven cases
+  separately.
+- No provider API, credential, destructive action, raw trajectory, or raw
+  provider content is used.
+

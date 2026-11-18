@@ -54,6 +54,42 @@ class RunnerTests(unittest.TestCase):
         self.assertNotIn("legacy_calibration", self.report)
         self.assertEqual(self.report["benchmark"], "ESAC-Bench")
         self.assertEqual(self.report["task_count"], 6)
+        self.assertEqual(self.report["recovery_case_count"], 7)
+        self.assertEqual(self.report["recovery_track"]["track_id"], "recovery-v0")
+        self.assertEqual(
+            self.report["recovery_track"]["case_ids"],
+            [
+                "before-side-effect",
+                "after-side-effect-before-ack",
+                "retry-after-timeout",
+                "destructive-action-restore",
+                "stale-checkpoint",
+                "handoff-during-recovery",
+                "incomplete-recovery-evidence",
+            ],
+        )
+
+    def test_guarded_recovery_control_passes_all_metrics(self):
+        summary = self.report["recovery_track"]["summaries"]["guarded"]
+        for metric in (
+            "final_state_restoration",
+            "side_effect_integrity",
+            "recovery_evidence_completeness",
+            "bounded_recovery",
+            "claim_support",
+        ):
+            self.assertEqual(summary[metric], {"pass": 7})
+
+    def test_naive_recovery_control_exposes_separate_failures(self):
+        summary = self.report["recovery_track"]["summaries"]["naive"]
+        self.assertEqual(summary["final_state_restoration"], {"pass": 4, "fail": 3})
+        self.assertEqual(summary["side_effect_integrity"], {"pass": 2, "fail": 5})
+        self.assertEqual(
+            summary["recovery_evidence_completeness"],
+            {"fail": 7},
+        )
+        self.assertEqual(summary["bounded_recovery"], {"pass": 7})
+        self.assertEqual(summary["claim_support"], {"fail": 7})
 
     def test_mutation_controls_catch_all_planted_failures(self):
         self.assertEqual(self.report["mutation_suite_status"], "passed")

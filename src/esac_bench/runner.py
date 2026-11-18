@@ -8,6 +8,7 @@ from typing import Any
 from .evaluator import evaluate_result
 from .models import DIMENSIONS, digest_metadata
 from .mutations import run_mutations
+from .recovery import run_recovery_track
 from .schema import SCHEMA_VERSION, validate_native_report
 from .tasks import TASKS, reference_result
 
@@ -36,12 +37,15 @@ def run_suite() -> dict[str, Any]:
         if result.profile == "guarded"
     }
     mutation_results = run_mutations(TASKS, guarded)
+    recovery_track = run_recovery_track()
     report: dict[str, Any] = {
         "benchmark": "ESAC-Bench",
         "schema_version": SCHEMA_VERSION,
         "protocol": "esac-offline-v0",
         "data_class": "synthetic",
         "task_count": len(TASKS),
+        "tracks": ["core-v0", recovery_track["track_id"]],
+        "recovery_case_count": recovery_track["case_count"],
         "task_contract_ids": [task.task_id for task in TASKS],
         "task_contract_digest": digest_metadata(
             [
@@ -64,6 +68,7 @@ def run_suite() -> dict[str, Any]:
             if all(item["detected"] for item in mutation_results)
             else "failed"
         ),
+        "recovery_track": recovery_track,
         "summaries": {
             profile: _summarize(
                 [result for result in results if result["profile"] == profile]
@@ -74,6 +79,7 @@ def run_suite() -> dict[str, Any]:
             "Reference profiles are evaluator controls, not model scores.",
             "No provider API or live environment was used.",
             "No composite score is reported.",
+            "The Recovery Track is synthetic control evidence, not production recovery proof.",
         ],
     }
     report["report_digest"] = digest_metadata(

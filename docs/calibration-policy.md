@@ -32,6 +32,12 @@ Raman unit-contract and QEMU compatibility findings belong in a separate
 diagnostic lane. They explain why task contracts and environment controls are
 needed, but they are not additional native tasks or causal proof.
 
+The synthetic `recovery-v0` track is different: it is part of the native
+ESAC-Bench report because its cases, observations, and evaluator controls are
+defined by this repository. Harbor and Agent Assurance Harness recovery
+observations remain calibration evidence unless they are re-run under the
+declared ESAC protocol.
+
 ## Public boundary
 
 Keep raw trajectories, prompts, provider responses, credentials, private logs,
